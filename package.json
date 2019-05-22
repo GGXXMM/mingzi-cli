@@ -12,7 +12,8 @@
   },
   "author": "guoxinming",
   "bin": {
-    "mingzi": "bin/mingzi"
+    "mingzi": "bin/mingzi",
+    "mingzi-init": "bin/mingzi-init"
   },
   "license": "ISC",
   "dependencies": {
@@ -21,6 +22,9 @@
     "commander": "^2.20.0",
     "consolidate": "^0.15.1",
     "download-git-repo": "^1.1.0",
-    "handlebars": "^4.1.2"
+    "handlebars": "^4.1.2",
+    "inquirer": "^6.3.1",
+    "ora": "^3.4.0",
+    "user-home": "^2.0.0"
   }
 }
