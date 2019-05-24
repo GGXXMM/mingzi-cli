@@ -20,7 +20,8 @@ class MingziInit {
     this.init()
   }
   init() {
-
+    this.help();
+    
   }
   help() {
     program.parse(process.argv)
