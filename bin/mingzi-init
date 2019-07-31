@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 'use strict';
 //从仓库下载并提取git存储库（GitHub，GitLab，Bitbucket）。
 const download = require('download-git-repo')
@@ -10,26 +11,83 @@ const exists = require('fs').existsSync
 const path = require('path')
 // 漂亮的loading
 const ora = require('ora')
+// 获取用户主目录的路径
+const home = require('user-home')
+// 给终端字体添加颜色
+const chalk = require('chalk')
 // 和用户交互命令行集合。表现是控制台输出问题
 const inquirer = require('inquirer')
+// 删除文件和文件夹
+const rm = require('rimraf').sync
 
 program
     .usage('<template-name> [project-name]')
 
 class MingziInit {
-  constructor() {
-    this.init()
-  }
-  init() {
-    this.help();
+    constructor() {
+        this.init()
+    }
+    init() {
+        this.help();
 
-    console.log(program.args)
-    this.template = program.args[0]
-  }
-  help() {
-    program.parse(process.argv)
-    if(process.argv.length < 1) return program.help()
-  }
+        this.template = program.args[0]
+        this.rawName = program.args[1]
+        this.dest = path.resolve(this.rawName || '.') // 返回当前文件目录所在的绝对路径
+        this.inPlace = !this.rawName || this.rawName === '.'
+        this.name = this.inPlace ? path.relative('../', process.cwd()) : this.rawName // 当前项目名
+        // home用户主目录 => home: /Users/gxm => tmp: /Users/gxm/.mingzi-templates/mingzi-web
+        this.tmp = path.join(home, '.mingzi-templates', this.template.replace(/\//g, '-'))
+
+        this.inquireTarget()
+        process.on('exit', () => {
+            console.log('')
+        })
+    }
+    help() {
+        program.parse(process.argv)
+        if (process.argv.length < 1) return program.help()
+    }
+    inquireTarget() {
+        if (exists(this.dest)) {
+            inquirer.prompt([{
+                type: 'confirm',
+                message: this.inPlace ? 'Generate project in current directory?' : 'Target directory exists. Continue?',
+                name: 'ok'
+            }]).then(answers => {
+                answers.ok && this.run()
+            })
+        } else {
+            console.log('This project already exists!')
+            this.run()
+        }
+    }
+    run() {
+        this.downloadTemplate()
+    }
+    // 下载项目模板
+    downloadTemplate() {
+        const self = this
+        const spinner = ora('downloading template...')
+        spinner.start()
+
+        // 本地存在模板，则先移除
+        exists(self.tmp) && rm(self.tmp)
+
+        // 下载模板到本地
+        download('github:GGXXMM/' + self.template, self.tmp, { clone: false }, (error)=>{
+            spinner.stop()
+            if(error) {
+                console.log(chalk.red(error))
+            }else{
+                console.info(chalk.green(`
+                //    ///  ~~~~  ///   //
+                //    ///  ~~~~ ///   //
+                ~~    ///   ~~  ///   ~~
+                `))
+                console.log(chalk.green('\n √ Generation completed!'))
+            }
+        })
+    }
 }
 
 new MingziInit()
