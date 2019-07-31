@@ -74,7 +74,7 @@ class MingziInit {
         exists(self.tmp) && rm(self.tmp)
 
         // 下载模板到本地
-        download('github:GGXXMM/' + self.template, self.tmp, { clone: false }, (error)=>{
+        download('github:vuejs-templates/' + self.template, self.tmp, { clone: false }, (error)=>{
             spinner.stop()
             if(error) {
                 console.log(chalk.red(error))

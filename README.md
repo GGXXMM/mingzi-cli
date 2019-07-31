@@ -11,5 +11,5 @@ mingzi init <template-name>  [project-name]
 Demo:
 
 ``` bash
-mingzi init mingzi-web first-web
+mingzi init webpack first-web
 ```
