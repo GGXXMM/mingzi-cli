@@ -1,15 +1,15 @@
 # mingzi-cli
 
-A simple Cli for mingzi projects
+A simple Cli 初始化项目的简易脚手架
 
 # Usage
 
 ``` bash
-mingzi init <template-name>  [project-name]
+mingzi-init <template-name>  [project-name]
 ```
 
 Demo:
 
 ``` bash
-mingzi init webpack first-web
+mingzi-init vue vue-demo
 ```

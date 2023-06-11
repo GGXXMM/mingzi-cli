@@ -2,7 +2,7 @@
 
 'use strict';
 //从仓库下载并提取git存储库（GitHub，GitLab，Bitbucket）。
-const download = require('download-git-repo')
+const down = require('download-git-repo')
 //主要用于创建子命令和切割命令行参数并执行
 const program = require('commander')
 //检查文件是否存在
@@ -15,10 +15,16 @@ const ora = require('ora')
 const home = require('user-home')
 // 给终端字体添加颜色
 const chalk = require('chalk')
+// 将终端命令改造成banner
+const figlet = require('figlet')
 // 和用户交互命令行集合。表现是控制台输出问题
 const inquirer = require('inquirer')
 // 删除文件和文件夹
 const rm = require('rimraf').sync
+// 调用系统命令
+const { spawn } = require('child_process')
+// 返回promise异步函数
+const { promisify } = require('util')
 
 program
     .usage('<template-name> [project-name]')
@@ -29,7 +35,7 @@ class MingziInit {
     }
     init() {
         this.help();
-
+        
         this.template = program.args[0]
         this.rawName = program.args[1]
         this.dest = path.resolve(this.rawName || '.') // 返回当前文件目录所在的绝对路径
@@ -47,6 +53,9 @@ class MingziInit {
         program.parse(process.argv)
         if (process.argv.length < 1) return program.help()
     }
+    successLog(content) {
+        return console.log(chalk.green(content))
+    }
     inquireTarget() {
         if (exists(this.dest)) {
             inquirer.prompt([{
@@ -57,37 +66,56 @@ class MingziInit {
                 answers.ok && this.run()
             })
         } else {
-            console.log('This project already exists!')
+            // console.log('This project already exists!')
             this.run()
         }
     }
-    run() {
-        this.downloadTemplate()
+    async run() {
+        // 下载项目模板
+        await this.downloadTemplate()
+        // 执行 npm i
+        await this.asyncSpawn('npm', ['install'], {
+            cwd: `./${this.name}`
+        })
+        this.successLog(`
+            安装完成
+            To get Start：
+            =================
+            cd ${this.name}
+            npm run dev
+        `)
+    }
+    // 安装依赖
+    async asyncSpawn(...args) {
+        return new Promise(resolve => {
+            const proc = spawn(...args)
+            proc.stdout.pipe(process.stdout)
+            proc.stderr.pipe(process.stderr)
+            proc.on('close', () => {
+                resolve()
+            })
+        })
     }
     // 下载项目模板
-    downloadTemplate() {
+    async downloadTemplate() {
         const self = this
+        const download = promisify(down)
         const spinner = ora('downloading template...')
+        const repoUrl = `github:GGXXMM/cli-template-project/#${this.template}`
         spinner.start()
 
         // 本地存在模板，则先移除
         exists(self.tmp) && rm(self.tmp)
 
         // 下载模板到本地
-        download('github:vuejs-templates/' + self.template, self.tmp, { clone: false }, (error)=>{
-            spinner.stop()
-            if(error) {
-                console.log(chalk.red(error))
-            }else{
-                console.info(chalk.green(`
-                //    ///  ~~~~  ///   //
-                //    ///  ~~~~ ///   //
-                ~~    ///   ~~  ///   ~~
-                `))
-                console.log(chalk.green('\n √ Generation completed!'))
-            }
-        })
+        try {
+            await download(repoUrl, this.name)
+        } catch (error) {
+            spinner.fail()
+        }
+        spinner.succeed()
     }
+    
 }
 
 new MingziInit()
